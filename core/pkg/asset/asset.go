@@ -1,8 +1,10 @@
 package asset
 
 import (
+	"encoding/hex"
 	"fmt"
 	"image"
+	"image/color"
 	"image/gif"
 	_ "image/gif"
 	"os"
@@ -24,6 +26,12 @@ type Store interface {
 
 type store struct {
 	location string
+}
+
+func NewStore(location string) Store {
+	return &store{
+		location: location,
+	}
 }
 
 func (s store) Image(ID string) (image.Image, error) {
@@ -62,4 +70,23 @@ func (s store) GIF(ID string) ([]*image.Paletted, error) {
 	}
 
 	return frames.Image, nil
+}
+
+func From2dArray(arr [][]struct {
+	I, J int
+	Hex  string
+}) image.Image {
+
+	bounds := image.Rectangle{Min: image.Point{0, 0}, Max: image.Point{len(arr), len(arr[0])}}
+	img := image.NewNRGBA(bounds)
+
+	for i := 0; i < len(arr); i++ {
+		for j := 0; j < len(arr[i]); j++ {
+			b, _ := hex.DecodeString(arr[i][j].Hex)
+
+			color := color.RGBA{b[0], b[1], b[2], b[3]}
+			img.Set(i, j, color)
+		}
+	}
+	return img
 }

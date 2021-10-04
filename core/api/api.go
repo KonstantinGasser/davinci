@@ -4,6 +4,8 @@ import (
 	"net"
 	"net/http"
 
+	matrixsvc "github.com/KonstantinGasser/davinci/core/domain/matrix/svc"
+	"github.com/KonstantinGasser/davinci/core/pkg/asset"
 	"github.com/gorilla/mux"
 	"github.com/sirupsen/logrus"
 )
@@ -21,7 +23,10 @@ type Api struct {
 	// storagePath refers to the host-path
 	// under which files (images/gifs) will be stored
 	// if not set default will be used
-	storagePath string
+	assets asset.Store
+
+	// dependencies
+	matrixSvc matrixsvc.Service
 }
 
 // WithHostAddr applies a IP:Port pair to the API on which
@@ -34,9 +39,9 @@ func WithHostAddr(addr string) func(*Api) {
 
 // WithStorage applies a custom storage path to the API
 // under which uploaded image and gifs will be stored
-func WithStorage(path string) func(*Api) {
+func WithStorage(store asset.Store) func(*Api) {
 	return func(a *Api) {
-		a.storagePath = path
+		a.assets = store
 	}
 }
 
@@ -49,12 +54,14 @@ func WithMiddleware(m ...mux.MiddlewareFunc) func(*Api) {
 
 // New returns a new Api instance. If no address is provided
 // the API will listen on its default address "127.0.0.1:8080"
-func New(opts ...func(*Api)) *Api {
+func New(matrixSvc matrixsvc.Service, opts ...func(*Api)) *Api {
 
 	apiSrv := &Api{
-		addr:        defaultAddress,
-		router:      mux.NewRouter(),
-		storagePath: defaultStoragePath,
+		addr:   defaultAddress,
+		router: mux.NewRouter(),
+		assets: asset.NewStore(defaultAddress),
+
+		matrixSvc: matrixSvc,
 	}
 
 	for _, opt := range opts {
@@ -74,10 +81,10 @@ func (a *Api) setup() {
 
 	// /run allows to render and run a specific image/gif
 	// on the LED matrix
-	a.router.HandleFunc("/run/{asset}", nil)
+	a.router.HandleFunc("/run/{formate}/{asset}", a.HandleUpdates)
 
 	// /draw allows to request a self drawn 16x16 pixel art
-	a.router.HandleFunc("/draw", nil)
+	a.router.HandleFunc("/draw", a.HandleDraw)
 
 }
 
