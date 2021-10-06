@@ -30,6 +30,7 @@ const (
 type Store interface {
 	Store(format string, file io.Reader) error
 	Load(assetID string) ([]byte, string, error)
+	List() ([]string, error)
 	Image(ID string) (image.Image, error)
 	GIF(ID string) ([]*image.Paletted, error)
 }
@@ -127,6 +128,23 @@ func (s store) GIF(ID string) ([]*image.Paletted, error) {
 	}
 
 	return frames.Image, nil
+}
+
+func (s store) List() ([]string, error) {
+
+	files, err := os.ReadDir(s.location)
+	if err != nil {
+		return nil, err
+	}
+
+	var assets []string
+	for _, file := range files {
+		if file.IsDir() {
+			continue
+		}
+		assets = append(assets, file.Name())
+	}
+	return assets, nil
 }
 
 func From2dArray(arr [][]struct {

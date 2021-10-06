@@ -78,14 +78,14 @@ func New(matrixSvc matrixsvc.Service, opts ...func(*Api)) *Api {
 // setup initializes the api routes
 func (a *Api) setup() {
 
-	// just for testing image upload
-
 	// /api/upload allows to upload either images (16x16)
 	// or gifs (16x16)
 	a.router.HandleFunc("/api/upload/{format}", a.HandleUpload).Methods("POST")
 
+	// /api/assets/list returns a list of all available assets
+	a.router.HandleFunc("/api/assets/list", a.HandleAssetList).Methods("GET")
 	// /api/asset returns the requested asset
-	a.router.HandleFunc("/api/asset/{asset}", a.HandleAsset).Methods("GET")
+	a.router.HandleFunc("/api/assets/{asset}", a.HandleAsset).Methods("GET")
 
 	// /api/run allows to render and run a specific image/gif
 	// on the LED matrix
@@ -96,7 +96,7 @@ func (a *Api) setup() {
 
 	// a.router.PathPrefix("").Handler(http.FileServer(http.Dir("./assets")))
 
-	// a.router.PathPrefix("/").Handler(http.FileServer(http.Dir("./")))
+	a.router.PathPrefix("/").Handler(http.FileServer(http.Dir("./")))
 
 	a.router.Use(
 		withLogging,

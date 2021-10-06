@@ -6,7 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Document</title>
 </head>
-<body>
+<body onload="loadAssets()">
     <form
       enctype="multipart/form-data"
       action="http://127.0.0.1:8001/api/upload/img"
@@ -23,5 +23,26 @@
       <input type="file" name="asset" />
       <input type="submit" value="upload gif" />
     </form>
+
+    <div id="assets">
+
+    </div>
+    <script>
+      function loadAssets() {
+        var xmlHttp = new XMLHttpRequest();
+        xmlHttp.open( "GET", "/api/assets/list", false ); // false for synchronous request
+        xmlHttp.send( null );
+        
+        resp =  xmlHttp.responseText;
+        assets = document.getElementById("assets")
+        asset_data =  JSON.parse(resp);
+
+        asset_data.forEach(element => {
+          assets.innerHTML += `
+            <img src="/api/assets/${element}" alt="${element}" style="width:100px;height:100px"/>
+          `
+        });
+      }
+    </script>
   </body>
 </html>
