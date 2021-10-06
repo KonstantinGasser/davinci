@@ -1,6 +1,6 @@
 # 16 X 16 Matrix: Project PacMan
 
-![davinci](./assets/logo.png)
+![davinci](logo.png)
 ## Requirements
 
 - control LED matrix with go code
