@@ -7,9 +7,14 @@ import (
 	"image/color"
 	"image/gif"
 	_ "image/gif"
+	"io"
 	"os"
 	"path/filepath"
+
+	"github.com/pkg/errors"
 )
+
+type Format string
 
 const (
 	locationImg = "images"
@@ -17,9 +22,13 @@ const (
 
 	extImg = ".png"
 	extGif = ".gif"
+
+	imgF string = "img"
+	gifF string = "gif"
 )
 
 type Store interface {
+	Store(format string, file io.Reader) error
 	Image(ID string) (image.Image, error)
 	GIF(ID string) ([]*image.Paletted, error)
 }
@@ -32,6 +41,31 @@ func NewStore(location string) Store {
 	return &store{
 		location: location,
 	}
+}
+
+func (s store) Store(format string, file io.Reader) error {
+	var tmpPath string
+	switch format {
+	case imgF:
+		tmpPath = "asset-*.png"
+	case gifF:
+		tmpPath = "asset-*.gif"
+	}
+
+	tmpFile, err := os.CreateTemp(s.location, tmpPath)
+	if err != nil {
+		return errors.Wrap(err, "create tmp file for asset")
+	}
+
+	bytes, err := io.ReadAll(file)
+	if err != nil {
+		return errors.Wrap(err, "could not read from file")
+	}
+
+	if _, err := tmpFile.Write(bytes); err != nil {
+		return errors.Wrap(err, "could not write file")
+	}
+	return nil
 }
 
 func (s store) Image(ID string) (image.Image, error) {

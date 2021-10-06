@@ -11,14 +11,17 @@ import (
 )
 
 const (
-	defaultAddress     = "127.0.0.1:8080"
-	defaultStoragePath = "./assets"
+	defaultAddress     = "127.0.0.1:8001"
+	defaultStoragePath = "assets"
+
+	// maxUploadSize is set to 1024 byte
+	// matching exactly 16x16 pixel á 4 bytes (rgba)
+	maxUploadSize = 1 << 10
 )
 
 type Api struct {
-	addr       string
-	router     *mux.Router
-	middleware []Middleware
+	addr   string
+	router *mux.Router
 
 	// storagePath refers to the host-path
 	// under which files (images/gifs) will be stored
@@ -59,7 +62,7 @@ func New(matrixSvc matrixsvc.Service, opts ...func(*Api)) *Api {
 	apiSrv := &Api{
 		addr:   defaultAddress,
 		router: mux.NewRouter(),
-		assets: asset.NewStore(defaultAddress),
+		assets: asset.NewStore(defaultStoragePath),
 
 		matrixSvc: matrixSvc,
 	}
@@ -75,17 +78,24 @@ func New(matrixSvc matrixsvc.Service, opts ...func(*Api)) *Api {
 // setup initializes the api routes
 func (a *Api) setup() {
 
-	// /upload allows to upload either images (16x16)
+	// just for testing image upload
+
+	// /api/upload allows to upload either images (16x16)
 	// or gifs (16x16)
-	a.router.HandleFunc("/upload", nil)
+	a.router.HandleFunc("/api/upload/{formate}", a.HandleUpload).Methods("POST")
 
-	// /run allows to render and run a specific image/gif
+	// /api/run allows to render and run a specific image/gif
 	// on the LED matrix
-	a.router.HandleFunc("/run/{formate}/{asset}", a.HandleUpdates)
+	a.router.HandleFunc("/api/run/{asset}", a.HandleUpdates).Methods("GET")
 
-	// /draw allows to request a self drawn 16x16 pixel art
-	a.router.HandleFunc("/draw", a.HandleDraw)
+	// /api/draw allows to request a self drawn 16x16 pixel art
+	a.router.HandleFunc("/api/draw", a.HandleDraw).Methods("POST")
 
+	a.router.PathPrefix("/").Handler(http.FileServer(http.Dir("./")))
+
+	a.router.Use(
+		withLogging,
+	)
 }
 
 // ListenAndServer start the Api-Server on the given address
@@ -94,7 +104,9 @@ func (a *Api) ListenAndServe() error {
 	if err != nil {
 		return err
 	}
+	defer listener.Close()
 
+	logrus.Infof("[API-Server] start listening on: %q\n", a.addr)
 	return http.Serve(listener, a.router)
 }
 

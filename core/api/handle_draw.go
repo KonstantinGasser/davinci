@@ -22,4 +22,5 @@ func (a *Api) HandleDraw(w http.ResponseWriter, r *http.Request) {
 	if err := a.matrixSvc.Print(img); err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
+	w.WriteHeader(http.StatusOK)
 }

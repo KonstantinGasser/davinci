@@ -11,8 +11,10 @@ import (
 )
 
 func main() {
+
 	rows := flag.Int("rows", 16, "number of rows of the matrix")
 	cols := flag.Int("cols", 16, "number of columns of the matrix")
+	flag.Parse()
 
 	matrixLED, err := matrix.New(*rows, *cols)
 	if err != nil {
@@ -21,10 +23,9 @@ func main() {
 
 	matrixSvc := matrixsvc.New(matrixLED)
 
-	apiServer := api.New()
+	apiServer := api.New(matrixSvc)
 
 	if err := apiServer.ListenAndServe(); err != nil {
 		logrus.Fatalf("Could no start API-Server: %s", err.Error())
 	}
-
 }

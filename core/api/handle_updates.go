@@ -50,4 +50,5 @@ func (a *Api) HandleUpdates(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "unknown file formate", http.StatusBadRequest)
 		return
 	}
+	w.WriteHeader(http.StatusOK)
 }
