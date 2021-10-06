@@ -29,6 +29,7 @@ const (
 
 type Store interface {
 	Store(format string, file io.Reader) error
+	Load(assetID string) ([]byte, string, error)
 	Image(ID string) (image.Image, error)
 	GIF(ID string) ([]*image.Paletted, error)
 }
@@ -66,6 +67,28 @@ func (s store) Store(format string, file io.Reader) error {
 		return errors.Wrap(err, "could not write file")
 	}
 	return nil
+}
+
+func (s store) Load(assetID string) ([]byte, string, error) {
+
+	filePath := filepath.Join(s.location, assetID)
+
+	file, err := os.Open(filePath)
+	if err != nil {
+		return nil, "", errors.Wrap(err, "could not open asset")
+	}
+	defer file.Close()
+
+	bytes, err := io.ReadAll(file)
+	if err != nil {
+		return nil, "", errors.Wrap(err, "could not read from file")
+	}
+
+	var format string = "png"
+	if filepath.Ext(assetID) == extGif {
+		format = "gif"
+	}
+	return bytes, format, err
 }
 
 func (s store) Image(ID string) (image.Image, error) {

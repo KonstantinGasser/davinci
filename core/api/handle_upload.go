@@ -15,7 +15,7 @@ import (
 func (a *Api) HandleUpload(w http.ResponseWriter, r *http.Request) {
 
 	vars := mux.Vars(r)
-	format, ok := vars["formate"]
+	format, ok := vars["format"]
 	if !ok {
 		http.Error(w, "missing asset format", http.StatusBadRequest)
 		return

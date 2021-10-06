@@ -82,7 +82,10 @@ func (a *Api) setup() {
 
 	// /api/upload allows to upload either images (16x16)
 	// or gifs (16x16)
-	a.router.HandleFunc("/api/upload/{formate}", a.HandleUpload).Methods("POST")
+	a.router.HandleFunc("/api/upload/{format}", a.HandleUpload).Methods("POST")
+
+	// /api/asset returns the requested asset
+	a.router.HandleFunc("/api/asset/{asset}", a.HandleAsset).Methods("GET")
 
 	// /api/run allows to render and run a specific image/gif
 	// on the LED matrix
@@ -91,7 +94,9 @@ func (a *Api) setup() {
 	// /api/draw allows to request a self drawn 16x16 pixel art
 	a.router.HandleFunc("/api/draw", a.HandleDraw).Methods("POST")
 
-	a.router.PathPrefix("/").Handler(http.FileServer(http.Dir("./")))
+	// a.router.PathPrefix("").Handler(http.FileServer(http.Dir("./assets")))
+
+	// a.router.PathPrefix("/").Handler(http.FileServer(http.Dir("./")))
 
 	a.router.Use(
 		withLogging,
